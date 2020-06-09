@@ -5,7 +5,7 @@ import os
 
 from config import Config
 from models import db, Customer, Order, Meal, Category, ordered_meals
-from forms import ClientContact
+from forms import ClientContact, ClientAuth
 
 
 def group_by_list(lst):
@@ -72,26 +72,69 @@ def updatecart(action, meal_id):
 def cart(action=""):
 
     form = ClientContact()
-
-
     return render_template("cart.html", form=form, action=action, cart_meals=session["meals"],
-                           total_cheque=session["total_cheque"], n_meals=session["n_meals"])
+                           total_cheque=session["total_cheque"], n_meals=session["n_meals"],
+                           customer=session.get("customer", False))
 
 
 @app.route("/account/")
 def account():
-    session.clear()
+
     return render_template("account.html")
 
 
-@app.route("/login/")
+@app.route("/login/", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    form = ClientAuth()
+    error_msg = ""
+
+    if request.method == 'POST':
+        email_input = form.client_email.data
+        password_input = form.client_password.data
+
+        customer = db.session.query(Customer).filter(Customer.email == email_input).first()
+
+        if customer and customer.password_valid(password_input):
+            session["customer"] = {"id": customer.id, "email": customer.email, "is_auth": True}
+            return redirect(url_for("account"))
+        else:
+            error_msg = "Не удаётся войти. Пожалуйста, проверьте правильность написания логина и пароля."
+            return render_template("login.html", form=form, error_msg=error_msg)
+
+    return render_template("login.html", form=form, error_msg=error_msg)
 
 
-@app.route("/register/")
+@app.route("/register/", methods=["GET", "POST"])
 def register():
-    return render_template("register.html")
+    form = ClientAuth()
+    error_msg = ""
+
+    if request.method == "POST":
+        email_input = form.client_email.data
+        password_input = form.client_password.data
+
+        customer = db.session.query(Customer).filter(Customer.email == email_input).first()
+
+        if "@" not in email_input:
+            error_msg = "Некорректная почта"
+            return render_template("register.html", error_msg=error_msg, form=form)
+        elif customer:
+            error_msg = "Такой пользователь уже существует"
+            return render_template("register.html", error_msg=error_msg, form=form)
+        elif len(password_input) < 8:
+            error_msg = "Пароль слишком простой"
+            return render_template("register.html", error_msg=error_msg, form=form)
+        else:
+            customer = Customer()
+            customer.email = email_input
+            customer.password(password_input)
+            db.session.add(customer)
+            db.session.commit()
+
+            session["customer"] = {"id": customer.id, "email": customer.email, "is_auth": True}
+            return redirect(url_for("account"))
+
+    return render_template("register.html", error_msg=error_msg, form=form)
 
 
 @app.route("/logout/")

@@ -1,8 +1,9 @@
 import email_validator
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, RadioField, HiddenField, FormField
+from wtforms import StringField, HiddenField, FormField, PasswordField
 from wtforms.validators import InputRequired, Email
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class ClientContact(FlaskForm):
@@ -14,3 +15,7 @@ class ClientContact(FlaskForm):
                     [InputRequired(message="Куда отправить информацию о заказе?")])
     client_phone = StringField("Телефон",
                                [InputRequired(message="Как курьеру связаться с вами?")])
+
+
+class ClientAuth(ClientContact):
+    client_password = PasswordField("Пароль", [InputRequired(message="Забыли пароль?")])

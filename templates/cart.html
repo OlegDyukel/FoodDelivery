@@ -4,10 +4,15 @@
 
   <main class="container">
     <h1 class="h3 my-4">Корзина</h1>
+
     {% if action == "deleted" %}
     <div class="alert alert-warning" role="alert">Блюдо удалено из корзины</div>
     {% endif %}
-    <div class="alert alert-warning" role="alert">Чтобы сделать заказ – <a href="/login.html">войдите</a> или <a href="/register.html">зарегистрируйтесь</a></div>
+
+    {% if not customer %}
+    <div class="alert alert-warning" role="alert">Чтобы сделать заказ – <a href={{ url_for("login") }}>войдите</a> или <a href={{ url_for("register") }}>зарегистрируйтесь</a></div>
+    {% endif %}
+
 
     <div class="row mt-5">
 

@@ -1,5 +1,6 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 db = SQLAlchemy()
@@ -21,6 +22,19 @@ class Customer(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     orders = db.relationship("Order", back_populates="customer")
+
+    def password(self):
+        # Запретим прямое обращение к паролю
+        raise AttributeError("Вам не нужно знать пароль!")
+
+    def password(self, password):
+        # Устанавливаем пароль через этот метод
+        self.password_hash = generate_password_hash(password)
+
+    def password_valid(self, password):
+        # Проверяем пароль через этот метод
+        # Функция check_password_hash превращает password в хеш и сравнивает с хранимым
+        return check_password_hash(self.password_hash, password)
 
 
 class Meal(db.Model):
