@@ -68,11 +68,9 @@ def upgrade():
     )
     # ### end Alembic commands ###
 
-    base_path = Path().absolute().parent.parent
 
-    meals_path = (base_path / "data/meals.tsv").resolve()
     lst_meals = []
-    with open(meals_path, encoding='utf-8') as file:
+    with open("meals.tsv", encoding='utf-8') as file:
         next(file)  # for ignoring 1st row
         for line in file:
             lst_temp = re.split(r"\t+", line)
@@ -91,9 +89,8 @@ def upgrade():
 
     op.bulk_insert(table_meals, lst_meals)
 
-    categories_path = (base_path / "data/categories.tsv").resolve()
     lst_categories = []
-    with open(categories_path, encoding='utf-8') as file:
+    with open("categories.tsv", encoding='utf-8') as file:
         next(file)  # for ignoring 1st row
         for line in file:
             lst_temp = re.split(r"\t+", line)
