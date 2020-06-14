@@ -19,6 +19,7 @@
             {{ form.client_password(class_="form-control") }}
           </div>
           <div class="checkbox mb-3"></div>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <button class="btn btn-lg btn-danger btn-block" type="submit">Войти</button>
         </form>
         <a href={{ url_for("register") }}>Зарегистрироваться</a>
