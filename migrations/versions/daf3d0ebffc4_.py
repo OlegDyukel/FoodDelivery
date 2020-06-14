@@ -5,11 +5,14 @@ Revises:
 Create Date: 2020-06-07 01:03:07.790960
 
 """
+import re
+import os
+
 from alembic import op
 import sqlalchemy as sa
-import re
-
+from pathlib import Path
 from datetime import datetime
+
 
 
 # revision identifiers, used by Alembic.
@@ -65,8 +68,11 @@ def upgrade():
     )
     # ### end Alembic commands ###
 
+    base_path = Path().absolute().parent.parent
+
+    meals_path = (base_path / "data/meals.tsv").resolve()
     lst_meals = []
-    with open("meals.tsv", encoding='utf-8') as file:
+    with open(meals_path, encoding='utf-8') as file:
         next(file)  # for ignoring 1st row
         for line in file:
             lst_temp = re.split(r"\t+", line)
@@ -74,33 +80,32 @@ def upgrade():
                               "description": lst_temp[3], "picture": lst_temp[4],
                               "category_id": lst_temp[5], "date_created": datetime.utcnow()})
 
+    table_meals = sa.table("meals",
+                           sa.Column('id', sa.Integer()),
+                           sa.Column('title', sa.String()),
+                           sa.Column('price', sa.Integer()),
+                           sa.Column('description', sa.Text()),
+                           sa.Column('picture', sa.String()),
+                           sa.Column('category_id', sa.Integer()),
+                           sa.Column('date_created', sa.DateTime()))
 
+    op.bulk_insert(table_meals, lst_meals)
+
+    categories_path = (base_path / "data/categories.tsv").resolve()
     lst_categories = []
-    with open("categories.tsv", encoding='utf-8') as file:
+    with open(categories_path, encoding='utf-8') as file:
         next(file)  # for ignoring 1st row
         for line in file:
             lst_temp = re.split(r"\t+", line)
             lst_categories.append({"id": lst_temp[0], "title": lst_temp[1],
                                    "date_created": datetime.utcnow()})
 
-
-    table_meals = sa.table("meals",
-    sa.Column('id', sa.Integer()),
-    sa.Column('title', sa.String()),
-    sa.Column('price', sa.Integer()),
-    sa.Column('description', sa.Text()),
-    sa.Column('picture', sa.String()),
-    sa.Column('category_id', sa.Integer()),
-    sa.Column('date_created', sa.DateTime()))
-
     table_categories = sa.table("categories",
-    sa.Column('id', sa.Integer()),
-    sa.Column('title', sa.String()),
-    sa.Column('date_created', sa.DateTime()))
+                                sa.Column('id', sa.Integer()),
+                                sa.Column('title', sa.String()),
+                                sa.Column('date_created', sa.DateTime()))
 
     op.bulk_insert(table_categories, lst_categories)
-    op.bulk_insert(table_meals, lst_meals)
-
 
 
 def downgrade():

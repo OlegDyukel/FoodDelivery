@@ -1,16 +1,23 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
+import string
 
 
 db = SQLAlchemy()
 
 
-ordered_meals = db.Table(
-                        "ordered_meals",
-                        db.Column("order_id", db.Integer, db.ForeignKey("orders.id")),
-                        db.Column("meal_id", db.Integer, db.ForeignKey("meals.id"))
-)
+class OrderedMeal(db.Model):
+    __tablename__ = "ordered_meals"
+
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("orders.id"))
+    meal_id = db.Column(db.Integer, db.ForeignKey("meals.id"))
+    meal_amount = db.Column(db.Integer, nullable=False)
+
+    order = db.relationship("Order", back_populates="meal")
+    meal = db.relationship("Meal", back_populates="order")
 
 
 class Customer(db.Model):
@@ -20,12 +27,18 @@ class Customer(db.Model):
     email = db.Column(db.String(), nullable=False, unique=True)
     password_hash = db.Column(db.String(128), nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    column_exclude_list = ('password_hash')  # убрать из списка в admin
 
-    orders = db.relationship("Order", back_populates="customer")
+    order = db.relationship("Order", back_populates="customer")
 
     def password(self):
         # Запретим прямое обращение к паролю
         raise AttributeError("Вам не нужно знать пароль!")
+
+    def generate_password(self):
+        alphabet = string.ascii_letters + string.digits
+        password = ''.join(secrets.choice(alphabet) for i in range(20))
+        return password
 
     def password(self, password):
         # Устанавливаем пароль через этот метод
@@ -49,7 +62,7 @@ class Meal(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     category = db.relationship("Category", back_populates="meal")
-    orders = db.relationship("Order", secondary=ordered_meals, back_populates="meals")
+    order = db.relationship("OrderedMeal", back_populates="meal")
 
 
 class Category(db.Model):
@@ -73,6 +86,5 @@ class Order(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     address = db.Column(db.String(100), nullable=False)
 
-    customer = db.relationship("Customer", back_populates="orders")
-    meals = db.relationship("Meal", secondary=ordered_meals, back_populates="orders")
-
+    customer = db.relationship("Customer", back_populates="order")
+    meal = db.relationship("OrderedMeal", back_populates="order")

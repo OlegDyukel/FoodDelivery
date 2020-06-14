@@ -2,7 +2,7 @@ import email_validator
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, HiddenField, FormField, PasswordField
-from wtforms.validators import InputRequired, Email
+from wtforms.validators import InputRequired, Email, DataRequired, Length, EqualTo
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -19,3 +19,12 @@ class ClientContact(FlaskForm):
 
 class ClientAuth(ClientContact):
     client_password = PasswordField("Пароль", [InputRequired(message="Забыли пароль?")])
+
+class ChangePasswordForm(FlaskForm):
+    old_password = PasswordField("Текущий пароль", [InputRequired()])
+    new_password = PasswordField("Новый пароль:",
+            [InputRequired(),
+            Length(min=8, message="Пароль должен быть не менее 8 символов")]
+    )
+    confirm_new_password = PasswordField("Пароль ещё раз:",
+                    [EqualTo("new_password", message="Пароли не одинаковые")])
