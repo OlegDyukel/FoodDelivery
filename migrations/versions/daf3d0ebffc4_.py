@@ -68,6 +68,21 @@ def upgrade():
     )
     # ### end Alembic commands ###
 
+    lst_categories = []
+    with open("categories.tsv", encoding='utf-8') as file:
+        next(file)  # for ignoring 1st row
+        for line in file:
+            lst_temp = re.split(r"\t+", line)
+            lst_categories.append({"id": lst_temp[0], "title": lst_temp[1],
+                                   "date_created": datetime.utcnow()})
+
+    table_categories = sa.table("categories",
+                                sa.Column('id', sa.Integer()),
+                                sa.Column('title', sa.String()),
+                                sa.Column('date_created', sa.DateTime()))
+
+    op.bulk_insert(table_categories, lst_categories)
+
 
     lst_meals = []
     with open("meals.tsv", encoding='utf-8') as file:
@@ -88,21 +103,6 @@ def upgrade():
                            sa.Column('date_created', sa.DateTime()))
 
     op.bulk_insert(table_meals, lst_meals)
-
-    lst_categories = []
-    with open("categories.tsv", encoding='utf-8') as file:
-        next(file)  # for ignoring 1st row
-        for line in file:
-            lst_temp = re.split(r"\t+", line)
-            lst_categories.append({"id": lst_temp[0], "title": lst_temp[1],
-                                   "date_created": datetime.utcnow()})
-
-    table_categories = sa.table("categories",
-                                sa.Column('id', sa.Integer()),
-                                sa.Column('title', sa.String()),
-                                sa.Column('date_created', sa.DateTime()))
-
-    op.bulk_insert(table_categories, lst_categories)
 
 
 def downgrade():
